@@ -1,3 +1,4 @@
+/*
 var searchTracks = function (query, access_token) {
   $.ajax({
     url: 'https://api.spotify.com/v1/search',
@@ -34,7 +35,7 @@ var getAudioFeatures = function(id, access_token) {
     }
   });
 };
-
+*/
 function getHashParams() {
   /**
     * Obtains parameters from the hash of the URL
