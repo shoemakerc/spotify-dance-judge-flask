@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="../static/base.css">
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
     <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
     <script src="../static/main.js"></script>
     {% from 'dialog.html' import render_dialog %}
@@ -16,10 +17,8 @@
     <div class="container-fluid">
 
       <div id="login">
-        <h1 id="login-header">Welcome to the Spotify Dance Judge! Click the button below to get started.</h1>       
-        {{render_dialog('Hello World')}} <!--DEBUG-->
+        <h1 id="login-header">Welcome to the Spotify Dance Judge! Click the button below to get started.</h1>
         <a href="/login" class="btn btn-primary">Enter</a>
-        {{render_dialog('Goodbye World')}} <!--DEBUG-->
       </div>
 
       <div id="loggedin">
@@ -29,11 +28,133 @@
             <i class="fa fa-headphones fa-4x"></i>
           </div>
         </div>
+
+        <div class="row" id="search-section">
+          <h2><b>Search<b></h2>
+          <p>Type a name of a song and artist name, then press Enter or click on "Search".</p>
+          <form id="search-form">
+            <input type="text" id="query" value="" class="form-control" placeholder="Type a Song Name and Artist"/>
+            <br>
+            <input type="submit" id="search" class="btn btn-primary" value="Search" />
+          </form>
+        </div>
+
+        <div class="row">
+          <div id="results"></div>
+        </div>
+
+        <div class="row">
+          <div id="audio-features"></div>
+        </div>
+
+        <div class="row" id="profile-section">
+          <h2><b>Profile info</b></h2>
+          <div class="col-xs-6" id="user-profile"></div>
+          <div class="col-xs-6" id="oauth">
+            <!--<button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>-->
+          </div> 
+        </div>
+
       </div>
     </div>
 
+    {% raw %}
+    <script id="user-profile-template" type="text/x-handlebars-template">
+      <h3><b>Logged in as {{display_name}}</b></h3>
+      <div class="media">
+        <div class="pull-left">
+          <img class="media-object" width="75" src="{{images.0.url}}" />
+        </div>
+        <div class="media-body">
+          <dl class="dl-horizontal">
+            <dt>Id</dt><dd>{{id}}</dd>
+            <dt>Country</dt><dd>{{country}}</dd>
+          </dl>
+        </div>
+      </div>
+    </script>
+    <script id="user-profile-template" type="text/x-handlebars-template">
+      <h3><b>Logged in as {{display_name}}</b></h3>
+      <div class="media">
+        <div class="pull-left">
+          <img class="media-object" width="75" src="{{images.0.url}}" />
+        </div>
+        <div class="media-body">
+          <dl class="dl-horizontal">
+            <dt>Id</dt><dd>{{id}}</dd>
+            <dt>Country</dt><dd>{{country}}</dd>
+          </dl>
+        </div>
+      </div>
+    </script>
+
+    <script id="audio-features-template" type="text/x-handlebars-template">
+      <h3><b>Features</b></h3>
+      <dl class="dl-horizontal">
+        <dt>Key</dt><dd>{{key-convert key}}</dd>
+        <dt>Mood:</dt><dd>{{valence}}</dd>
+        <dt>Can I dance to this?</dt><dd>{{dance? danceability}}</dd>
+      </dl>
+    </script>
+
+    <script id="results-template" type="text/x-handlebars-template">
+      <h3>Results</h3>
+      <img width="150" height="150" src="{{tracks.items.0.album.images.0.url}}" />
+      <h4>You're (hopefully) searching for "{{tracks.items.0.name}}" by {{tracks.items.0.artists.0.name}}.</h4>
+    </script>
+
+    <script id="oauth-template" type="text/x-handlebars-template">
+      <h3>oAuth info</h3>
+      <dl class="dl-horizontal">
+        <dt>Access token</dt><dd class="text-overflow">{{access_token}}</dd>
+        <dt>Refresh token</dt><dd class="text-overflow">{{refresh_token}}></dd>
+      </dl>
+      <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
+    </script>
+    {% endraw %}
+
+    <script>
+      /**
+       * Helper register: map danceability
+       * @param {number} danceability 
+       * @return {string} The judgment
+       */
+
+      Handlebars.registerHelper("dance?", function(danceability) {
+        if (danceability < 0.25) {
+          return "You're gonna look silly dancing to this..."
+        } else if (danceability >= 0.25 && danceability < 0.45) {
+          return "You can try to dance to this, but it might look a bit weird."
+        } else if (danceability >= 0.45 && danceability < 0.60) {
+          return "Alright, I guess I'll allow it."
+        } else if (danceability >= 0.60 && danceability < 0.85) {
+          return "I recommend you get down to this."
+        } else {
+          return "A complete banger. I hope you're busting moves right now."
+        }
+      });
+
+      /**
+       * Helper register: map given pitch class to associated tone
+       * @param {number} key The pitch class value
+       * @return {string} The corresponding tone
+       */
+
+      Handlebars.registerHelper("key-convert", function(key) {
+        var keys = ['C', 'C#', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'];
+        return keys[key];
+      });
+    </script>
+
     <script>
       (function() {
+        var userProfileSource = document.getElementById('user-profile-template').innerHTML,
+            userProfileTemplate = Handlebars.compile(userProfileSource),
+            userProfilePlaceholder = document.getElementById('user-profile');
+
+        var oauthSource = document.getElementById('oauth-template').innerHTML,
+            oauthTemplate = Handlebars.compile(oauthSource),
+            oauthPlaceholder = document.getElementById('oauth');
 
         var params = getHashParams();
 
@@ -45,13 +166,51 @@
           alert('There was an error during the authentication');
         } else {
           if (access_token) {
-            $('#loggedin').show();
-            $('#login').hide();
+            // render oauth info
+            
+            oauthPlaceholder.innerHTML = oauthTemplate({
+              access_token: access_token,
+              refresh_token: refresh_token
+            });
+            
+            $.ajax({
+                url: 'https://api.spotify.com/v1/me',
+                headers: {
+                  'Authorization': 'Bearer ' + access_token
+                },
+                success: function(response) {
+                  userProfilePlaceholder.innerHTML = userProfileTemplate(response);
+
+                  $('#login').hide(); // after getting the profile credentials,
+                  $('#loggedin').show(); // switch to render 'logged in' screen
+                }
+            });
+
           } else {
               // render initial screen
               $('#login').show();
               $('#loggedin').hide();
           }
+
+          document.getElementById('search-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            searchTracks(document.getElementById('query').value, access_token);
+          }, false);
+
+          document.getElementById('obtain-new-token').addEventListener('click', function() {
+            $.ajax({
+              url: '/refresh_token',
+              data: {
+                'refresh_token': refresh_token
+              }
+            }).done(function(data) {
+              access_token = data.access_token;
+              oauthPlaceholder.innerHTML = oauthTemplate({
+                access_token: access_token,
+                refresh_token: refresh_token
+              });
+            });
+          }, false);
         }
       })();
     </script>

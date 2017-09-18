@@ -61,7 +61,6 @@ def index():
 
     url_args = "&".join(["{}={}".format(key,urllib.quote(val)) for key,val in auth_query_parameters.iteritems()])
     auth_url = "{}/?{}".format(SPOTIFY_AUTH_URL, url_args)
-    print("redirecting...") # DEBUG
     return redirect(auth_url)
 
 
@@ -71,7 +70,6 @@ def callback():
     TODO: add error check for state matching (see express example)
     '''
     # Auth Step 4: Your application requests refresh and access tokens
-    print("Step 4") # DEBUG
     auth_token = request.args['code']
     auth_state = request.args['state']
     code_payload = {
@@ -84,7 +82,6 @@ def callback():
     post_request = requests.post(SPOTIFY_TOKEN_URL, data=code_payload, headers=headers)
     if post_request.status_code == 200:
         # Auth Step 5: Tokens are Returned to Application
-        print("Step 5") # DEBUG
         response_data = json.loads(post_request.text)
         access_token = response_data["access_token"]
         refresh_token = response_data["refresh_token"]
@@ -92,15 +89,12 @@ def callback():
         expires_in = response_data["expires_in"]
 
         # Auth Step 6: Use the access token to access Spotify API
-        print("Step 6") # DEBUG
         authorization_header = {"Authorization":"Bearer {}".format(access_token)}
 
         # Get profile data
         user_profile_api_endpoint = "{}/me".format(SPOTIFY_API_URL)
         profile_response = requests.get(user_profile_api_endpoint, headers=authorization_header)
         profile_data = json.loads(profile_response.text)
-        print(profile_response.text) # DEBUG
-        print("redirecting(2)...") # DEBUG
         return redirect("/#access_token={}&refresh_token={}".format(access_token, refresh_token))
     '''
     # Get user playlist data
