@@ -55,7 +55,7 @@ If the browser analyzer or its weights change, port the change, copy the weights
 node tests/make_expected.mjs ../shoemakerc.github.io/src/lib/dance-judge/analyze.ts
 ```
 
-One thing differs on purpose. Stereo is mixed to mono as (L + R) / √2, the way the calibration's decoder did it, where the browser version averages the channels. Scores for the same song can therefore differ a little between the two, mostly in energy.
+Both versions mix stereo to mono as (L + R) / √2, the way the calibration's decoder did; an average would read 3 dB quieter and score lower on energy. Scores for the same song can still differ by a few hundredths between the two, because each decodes the preview with a different decoder.
 
 ## Tests
 
