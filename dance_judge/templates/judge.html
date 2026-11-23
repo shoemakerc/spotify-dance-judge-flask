@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{# Five hairlines, like an empty musical staff. The site's section break. #}
+{% macro staff(label=None) %}
+<div class="staff" role="separator">
+  <div class="staff-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+  {% if label %}<span class="staff-label">{{ label }}</span>{% endif %}
+</div>
+{% endmacro %}
+
+{# A key name like "B♭ minor", with its ♭ or ♯ set in the music font. #}
+{% macro key_name(name) %}
+{%- for part in name | accidentals -%}
+  {%- if part in "♭♯" and part %}<span class="accidental">{{ part }}</span>{% else %}{{ part }}{% endif -%}
+{%- endfor -%}
+{% endmacro %}
+
+{% block title %}{% if hearing %}{{ hearing.song.title }} · {% endif %}Dance Judge{% endblock %}
+
+{% block main %}
+<section class="page-intro">
+  <p class="meta"><a href="{{ site.url }}/projects/">Projects</a> · Since 2017 · Flask edition</p>
+  <h1 class="page-title">Dance Judge</h1>
+  <p class="lede">
+    How cool (or not cool) would you look busting moves to a certain song?
+    Pick one, and let the Dance Judge be the… judge.
+  </p>
+</section>
+{{ staff() }}
+
+<div class="judge">
+  <form role="search" class="judge-search" action="{{ url_for('index') }}">
+    <label for="judge-query" class="meta">Pick a song</label>
+    <input id="judge-query" type="search" name="q" value="{{ query or '' }}" placeholder="Title, artist, or both"
+           autocomplete="off" spellcheck="false" enterkeyhint="search" minlength="2" maxlength="100" required>
+    <button type="submit" class="visually-hidden">Search</button>
+  </form>
+
+  {% if not query %}
+  <p class="judge-try">
+    <span class="meta">Or try</span>
+    {% for id, label in suggestions %}
+    <a href="{{ url_for('song', track_id=id, _anchor='verdict') }}">{{ label }}</a>
+    {% endfor %}
+  </p>
+  {% endif %}
+
+  {% if query %}
+  <div class="judge-results">
+    {% if search_failed %}
+    <p class="judge-note">The record store isn’t answering. Give it a minute and try again.</p>
+    {% elif not results %}
+    <p class="judge-note">Nothing by that name. Try adding the artist.</p>
+    {% else %}
+    <ol class="judge-result-list">
+      {% for song in results %}
+      <li>
+        <a class="judge-result" href="{{ url_for('song', track_id=song.id, _anchor='verdict') }}">
+          <img src="{{ song.artwork_at(120) }}" alt="" width="48" height="48" loading="lazy">
+          <span class="judge-result-text">
+            <span class="judge-result-title">{{ song.title }}</span>
+            <span class="judge-result-detail">{{ song.artist }}{% if song.album %} · {{ song.album }}{% endif %}</span>
+          </span>
+          <span class="meta">{{ (song.duration_ms / 1000) | clock }}</span>
+        </a>
+      </li>
+      {% endfor %}
+    </ol>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# Filled in by judge.js the moment a song is picked, while the server listens. #}
+  <div class="staff judge-listening-staff" id="judge-listening" hidden>
+    <div class="staff-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+    <span class="staff-label" role="status">The judge is listening…</span>
+  </div>
+
+  <div class="judge-stage" id="verdict">
+    {% if failed %}
+    <p class="judge-note" role="status">{{ failed }}</p>
+    {% elif hearing %}
+    {% set song, verdict, analysis = hearing.song, hearing.verdict, hearing.analysis %}
+    <article class="verdict">
+      <div class="verdict-song">
+        <img class="verdict-art" src="{{ song.artwork_at(600) }}" alt="" width="600" height="600">
+        <div>
+          <h2 class="verdict-title">{{ song.title }}</h2>
+          <p class="verdict-artist">{{ song.artist }}{% if song.year %}<span class="meta"> · {{ song.year }}</span>{% endif %}</p>
+        </div>
+      </div>
+      <p class="meta verdict-label">The verdict</p>
+      <blockquote class="verdict-line">“{{ verdict.line }}”</blockquote>
+
+      <div class="judge-meter">
+        <div class="judge-meter-track" role="meter" aria-label="Danceability" aria-valuemin="0" aria-valuemax="1"
+             aria-valuenow="{{ '%.2f' | format(verdict.danceability) }}">
+          {% for t in thresholds %}<span class="judge-meter-tick" style="left: {{ t * 100 }}%"></span>{% endfor %}
+          <span class="judge-meter-fill" style="width: {{ verdict.danceability * 100 }}%"></span>
+          <span class="judge-meter-mark" style="left: {{ verdict.danceability * 100 }}%"></span>
+        </div>
+        <div class="judge-meter-scale meta" aria-hidden="true"><span>Silly</span><span>Banger</span></div>
+      </div>
+
+      <dl class="judge-stats">
+        <div><dt class="meta">Danceability</dt><dd>{{ '%.2f' | format(verdict.danceability) }}</dd></div>
+        <div><dt class="meta">Energy</dt><dd>{{ '%.2f' | format(verdict.energy) }}</dd></div>
+        {% if verdict.tempo is none %}
+        <div><dt class="meta">No steady beat</dt><dd>—</dd></div>
+        {% else %}
+        <div><dt class="meta">Tempo</dt><dd>{{ verdict.tempo }}<span class="judge-unit"> BPM</span></dd></div>
+        {% endif %}
+        <div><dt class="meta">Key</dt><dd>{{ key_name(verdict.key) }}</dd></div>
+      </dl>
+
+      {# The onset envelope on a staff, with the beat grid (if any). judge.js adds the play button and playhead. #}
+      <figure class="heard" data-duration="{{ analysis.duration }}">
+        <figcaption class="heard-head">
+          <span class="meta">What the judge heard</span>
+          <button type="button" class="heard-play meta" hidden>▶ Play the preview</button>
+        </figcaption>
+        <svg viewBox="0 0 {{ heard_w }} {{ heard_h }}" preserveAspectRatio="none" role="img"
+             aria-label="How much new sound arrives over the {{ analysis.duration | round | int }}-second preview{% if verdict.tempo is not none %}, with {{ analysis.beats | length }} beats at {{ verdict.tempo }} BPM marked below{% endif %}.">
+          <defs><clipPath id="heard-played"><rect x="0" y="0" width="0" height="{{ heard_h }}"/></clipPath></defs>
+          {% for y in (0.15, 0.325, 0.5, 0.675, 0.85) %}
+          <line x1="0" x2="{{ heard_w }}" y1="{{ y * heard_h }}" y2="{{ y * heard_h }}" class="heard-staff" vector-effect="non-scaling-stroke"/>
+          {% endfor %}
+          <path d="{{ shape }}" class="heard-shape"/>
+          <path d="{{ shape }}" class="heard-shape is-played" clip-path="url(#heard-played)"/>
+          {% if verdict.tempo is not none %}
+          {% for t in analysis.beats %}
+          {% set x = '%.1f' | format(t / analysis.duration * heard_w) %}
+          <line x1="{{ x }}" x2="{{ x }}" y1="{{ heard_h - 6 }}" y2="{{ heard_h }}" class="heard-beat" vector-effect="non-scaling-stroke"/>
+          {% endfor %}
+          {% endif %}
+          <line x1="0" x2="0" y1="0" y2="{{ heard_h }}" class="heard-playhead" vector-effect="non-scaling-stroke" hidden/>
+        </svg>
+        <div class="heard-scale meta" aria-hidden="true"><span>0:00</span><span>{{ analysis.duration | clock }}</span></div>
+        <audio src="{{ song.preview_url }}" preload="none" controls></audio>
+      </figure>
+
+      <p class="meta verdict-links">
+        <a href="{{ song.apple_url }}">Apple Music ↗</a>
+        <a href="https://open.spotify.com/search/{{ (song.title ~ ' ' ~ song.artist) | urlencode }}">Spotify ↗</a>
+        <a href="{{ url_for('api_song', track_id=song.id) }}">As JSON</a>
+        <button type="button" class="copy-link" hidden>Copy link</button>
+      </p>
+    </article>
+    {% endif %}
+  </div>
+</div>
+
+<section class="judge-about">
+  {{ staff("How it works") }}
+  <div class="prose">
+    <p>
+      In 2017 I built the Dance Judge twice: once in Node, and once, to learn
+      Flask, in Python. Both asked Spotify how danceable a song was, and
+      Spotify has since closed that door to hobby apps. The Node one became
+      <a href="{{ site.url }}/dance-judge/">a page on my site</a> that does
+      the listening in your browser. This is the Flask one, finished at last,
+      and here the server does the listening.
+    </p>
+    <p>
+      When you pick a song, the server downloads Apple’s 30-second preview
+      and decodes it. The judge measures how much new sound arrives in each
+      12-millisecond slice, then looks for the delay at which that pattern
+      best repeats: that’s the beat, and how cleanly it repeats is how strong
+      the beat is. It also tallies the notes it hears against the 24 major
+      and minor key profiles, and checks how loud, bright, and percussive the
+      clip is.
+    </p>
+    <p>
+      A model fit to Spotify’s archived scores for 295 songs turns those
+      measurements into Spotify’s old 0-to-1 scales. On songs it wasn’t fit
+      to, the judge reaches the same verdict Spotify’s number would about
+      three times in five, and comes within one verdict nearly every time. It
+      only hears thirty seconds, though, and it has opinions of its own. The
+      verdicts are the same ones from 2017.
+    </p>
+    <p>
+      The listening code is a NumPy port of the browser version’s, tested to
+      take the same measurements from the same samples. To have a whole song
+      judged from a file of your own, use
+      <a href="{{ site.url }}/dance-judge/">the browser version</a>, which
+      never uploads it.
+    </p>
+  </div>
+  <p class="meta judge-credits">
+    Songs and previews from the <a href="https://performance-partners.apple.com/search-api">iTunes Search API</a> ·
+    <a href="https://github.com/shoemakerc/spotify-dance-judge-flask">Source</a> ·
+    <a href="https://github.com/shoemakerc/spotify-dance-judge-flask/tree/archive-2017">The 2017 version</a>
+  </p>
+</section>
+{% endblock %}

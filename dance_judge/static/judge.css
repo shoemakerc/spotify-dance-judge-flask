@@ -1,0 +1,488 @@
+/*
+ * The Dance Judge's own styles, on top of the site's base styles
+ * (site-base.css, synced from shoemakerc.github.io). These follow the browser
+ * version's, in src/app/globals.css of that repo, so the two editions look
+ * alike; here results and suggestions are links rather than buttons.
+ */
+
+:root {
+  --font-serif: "Newsreader";
+  --font-mono: "IBM Plex Mono";
+  --font-music: "Noto Music";
+}
+
+/* The ♭ or ♯ of a key name. Neither text face has those glyphs, so they come
+   from the music font, which draws them at notation size: a little small
+   beside capitals, hence the bump. */
+
+.accidental {
+  font-family: var(--font-music);
+  font-size: 1.25em;
+  line-height: 0;
+}
+
+.judge {
+  max-width: 46rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.judge-search {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.judge-search input {
+  width: 100%;
+  margin: 0;
+  padding: 0.35rem 0 0.5rem;
+  font: inherit;
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  border-radius: 0;
+  appearance: none;
+}
+
+.judge-search input::placeholder {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.judge-search input:focus-visible {
+  outline: none;
+  border-bottom-color: var(--accent);
+  box-shadow: 0 1px 0 var(--accent);
+}
+
+.judge-search input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.judge button {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.judge button:hover {
+  color: var(--accent);
+}
+
+.judge button.meta {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.judge-try {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 1.1rem;
+  margin: 1.25rem 0 0;
+}
+
+.judge-try a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 0.18em;
+}
+
+.judge-results {
+  margin-top: 0.5rem;
+}
+
+.judge-results > .meta {
+  margin: 1rem 0 0;
+}
+
+.judge-result-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  transition: opacity 120ms ease;
+}
+
+.judge-result-list.is-stale {
+  opacity: 0.5;
+}
+
+.judge-result-list li {
+  border-bottom: 1px solid var(--rule);
+}
+
+.judge .judge-result {
+  text-decoration: none;
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 0;
+  text-align: left;
+}
+
+.judge .judge-result:hover {
+  color: inherit;
+}
+
+.judge-result img {
+  display: block;
+  width: 3rem;
+  height: 3rem;
+  object-fit: cover;
+  background: var(--highlight);
+}
+
+.judge-result-text {
+  display: grid;
+  gap: 0.1rem;
+  line-height: 1.3;
+}
+
+.judge-result-title,
+.judge-result-detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.judge-result-title {
+  font-size: 1.125rem;
+  transition: color 120ms ease;
+}
+
+.judge-result:hover .judge-result-title {
+  color: var(--accent);
+}
+
+.judge-result-detail {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.judge-note {
+  margin: 1rem 0 0;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.judge-stage {
+  scroll-margin: 2rem;
+}
+
+.judge-stage:not(:empty) {
+  margin-top: 3.5rem;
+}
+
+.verdict-song {
+  display: grid;
+  grid-template-columns: clamp(6rem, 24vw, 10rem) minmax(0, 1fr);
+  gap: clamp(1rem, 3vw, 1.75rem);
+  align-items: end;
+}
+
+.verdict-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: var(--highlight);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 12px 32px -12px rgb(0 0 0 / 0.25);
+}
+
+.verdict-title {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.75rem, 4.5vw, 2.75rem);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  font-variation-settings: "opsz" 60;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.verdict-artist {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--ink-soft);
+}
+
+.verdict-label {
+  margin: 3rem 0 0.75rem;
+  color: var(--accent);
+}
+
+.verdict-line {
+  margin: 0;
+  font-size: clamp(1.5rem, 3.8vw, 2.4rem);
+  font-style: italic;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  font-variation-settings: "opsz" 60;
+  text-wrap: balance;
+}
+
+.judge-meter {
+  margin-top: 2.25rem;
+}
+
+.judge-meter-track {
+  position: relative;
+  height: 1rem;
+}
+
+.judge-meter-track::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: var(--ink);
+}
+
+.judge-meter-tick {
+  position: absolute;
+  bottom: 0;
+  width: 1px;
+  height: 0.5rem;
+  background: var(--ink);
+}
+
+.judge-meter-fill {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--accent);
+  animation: judge-fill 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.judge-meter-mark {
+  position: absolute;
+  bottom: -0.3rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--paper);
+  transform: translateX(-50%);
+  animation: judge-mark 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes judge-fill {
+  from {
+    width: 0;
+  }
+}
+
+@keyframes judge-mark {
+  from {
+    left: 0;
+  }
+}
+
+.judge-meter-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+}
+
+.judge-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.5rem 2rem;
+  margin: 2.5rem 0 0;
+}
+
+.judge-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ink);
+}
+
+.judge-stats dd {
+  order: -1;
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: nowrap;
+}
+
+.judge-unit {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.heard {
+  margin: 3rem 0 0;
+}
+
+.heard-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.judge .heard-play {
+  color: var(--ink);
+}
+
+.judge .heard-play:hover {
+  color: var(--accent);
+}
+
+.heard svg {
+  display: block;
+  width: 100%;
+  height: clamp(5rem, 14vw, 7rem);
+}
+
+.heard-staff {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+
+.heard-shape {
+  fill: var(--ink-soft);
+  opacity: 0.35;
+}
+
+.heard-shape.is-played {
+  fill: var(--accent);
+  opacity: 0.85;
+}
+
+.heard-beat,
+.heard-playhead {
+  stroke: var(--accent);
+  stroke-width: 1;
+}
+
+.heard-playhead {
+  stroke-width: 1.5;
+}
+
+.heard-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.4rem;
+}
+
+.verdict-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 2.5rem 0 0;
+}
+
+.judge-listening-staff {
+  margin: 2.5rem 0 0;
+}
+
+.judge-listening-staff .staff-lines span {
+  animation: judge-listen 1.1s ease-in-out infinite;
+}
+
+.judge-listening-staff .staff-lines span:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.judge-listening-staff .staff-lines span:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.judge-listening-staff .staff-lines span:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.judge-listening-staff .staff-lines span:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+@keyframes judge-listen {
+  50% {
+    background: var(--accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .judge-meter-fill,
+  .judge-meter-mark,
+  .judge-listening-staff .staff-lines span {
+    animation: none;
+  }
+}
+
+.judge-about {
+  margin-top: 5rem;
+}
+
+.judge-credits {
+  margin: 2rem 0 0;
+}
+
+@media (max-width: 40rem) {
+  .judge-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* The form's submit button is for screen readers; Enter does the same. */
+
+.judge-search {
+  position: relative;
+}
+
+/* Shown the moment a song is picked, while the server listens. */
+
+.judge.is-listening .judge-results,
+.judge.is-listening .judge-stage {
+  opacity: 0.35;
+  transition: opacity 200ms ease;
+}
+
+/* SVG doesn't honor the hidden attribute by itself. */
+
+.heard-playhead[hidden] {
+  display: none;
+}
+
+/* Without scripts the browser's own player stands in for the play button. */
+
+.heard audio[controls] {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+}

@@ -1,0 +1,13 @@
+# A Render blueprint: one free web service. See the README's "Put it online".
+services:
+  - type: web
+    name: dance-judge
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python scripts/sync_site.py
+    # One process, so every request shares the same memory of past rulings.
+    startCommand: gunicorn wsgi:app --workers 1 --threads 8 --timeout 60
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.9

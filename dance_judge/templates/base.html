@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Dance Judge{% endblock %} · {{ site.name }}</title>
+    <meta name="description" content="How cool (or not cool) would you look busting moves to a certain song? Pick one and the judge listens, then rules.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    {# The site's two faces, plus a music font cut down to the flat and sharp signs. #}
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Music&text=%E2%99%AD%E2%99%AF&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='site-base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='judge.css') }}">
+  </head>
+  <body>
+    <div class="page">
+      <header class="site-header">
+        <a href="{{ site.url }}/" class="wordmark">{{ site.name }}</a>
+        <nav aria-label="Main">
+          {% for item in site.nav %}
+          <a href="{{ site.url }}{{ item.path }}">{{ item.label }}</a>
+          {% endfor %}
+        </nav>
+      </header>
+      <main>{% block main %}{% endblock %}</main>
+      <footer class="site-footer">
+        <span>© {{ year }} {{ site.name }}</span>
+        <span class="footer-links">
+          {% for link in site.links %}
+          <a href="{{ link.href }}">{{ link.label }}</a>
+          {% endfor %}
+        </span>
+      </footer>
+    </div>
+    <script src="{{ url_for('static', filename='judge.js') }}" defer></script>
+  </body>
+</html>
